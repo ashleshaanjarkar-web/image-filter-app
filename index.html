@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interactive Image Filter App</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Duke SimpleImage library for pixel manipulation -->
-  <script src="https://www.dukelearn2code.org/Course1/common/js/image/SimpleImage.js"></script>
 </head>
 <body>
 
@@ -19,7 +17,7 @@
     <!-- Upload Input -->
     <div class="upload-section">
       <label for="finput" class="custom-file-upload">Choose Image</label>
-      <input type="file" id="finput" accept="image/*" onchange="upload()">
+      <input type="file" id="finput" accept="image/*" onchange="uploadImage()">
     </div>
 
     <!-- Filter Control Buttons -->
