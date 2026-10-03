@@ -2,15 +2,21 @@ var originalImage = null;
 var filterImage = null;
 var canvas = document.getElementById("canvas");
 
-// Load user uploaded image onto the canvas
+// Load user uploaded image reliably across desktop and mobile devices
 function upload() {
   var fileInput = document.getElementById("finput");
-  originalImage = new SimpleImage(fileInput);
-  filterImage = new SimpleImage(fileInput);
-  originalImage.drawTo(canvas);
+  
+  if (fileInput.files && fileInput.files[0]) {
+    // Create new SimpleImage instances from the selected file
+    originalImage = new SimpleImage(fileInput);
+    filterImage = new SimpleImage(fileInput);
+    
+    // Draw directly to canvas once loaded
+    originalImage.drawTo(canvas);
+  }
 }
 
-// Check if image is loaded before processing
+// Check if image is loaded and valid before applying filters
 function imageIsLoaded(img) {
   if (img == null || !img.complete()) {
     alert("Please upload an image first!");
@@ -19,11 +25,12 @@ function imageIsLoaded(img) {
   return true;
 }
 
-// Reset image back to original
+// Reset image back to original upload
 function resetImage() {
   if (imageIsLoaded(originalImage)) {
     originalImage.drawTo(canvas);
-    filterImage = new SimpleImage(originalImage);
+    var fileInput = document.getElementById("finput");
+    filterImage = new SimpleImage(fileInput);
   }
 }
 
