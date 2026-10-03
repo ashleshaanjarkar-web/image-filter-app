@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Image Filter App</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Duke SimpleImage library for pixel manipulation -->
+  <script src="https://www.dukelearn2code.org/Course1/common/js/image/SimpleImage.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Image Filter Application</h1>
+    
+    <!-- Canvas where the image will be drawn -->
+    <canvas id="canvas"></canvas>
+
+    <!-- Upload Input -->
+    <div class="upload-section">
+      <label for="finput" class="custom-file-upload">Choose Image</label>
+      <input type="file" id="finput" multiple="false" accept="image/*" onchange="upload()">
+    </div>
+
+    <!-- Filter Control Buttons -->
+    <div class="button-group">
+      <button class="btn filter-btn" onclick="makeGrayscale()">Grayscale</button>
+      <button class="btn filter-btn" onclick="makeRed()">Red Tint</button>
+      <button class="btn filter-btn" onclick="makeRainbow()">Rainbow</button>
+      <button class="btn reset-btn" onclick="resetImage()">Reset Image</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
