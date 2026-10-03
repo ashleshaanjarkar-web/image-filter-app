@@ -4,31 +4,368 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interactive Image Filter App</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 15px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 2px dashed #cccccc;
+      margin-bottom: 20px;
+      background-color: #fafafa;
+    }
+
+    .controls-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .file-input-wrapper {
+      margin-bottom: 10px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .custom-file-upload {
+      background-color: #27ae60;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-block;
+      transition: background 0.2s ease;
+    }
+
+    .custom-file-upload:hover {
+      background-color: #219150;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-grayscale { background-color: #3498db; }
+    .btn-red { background-color: #e74c3c; }
+    .btn-rainbow { background-color: #9b59b6; }
+    .btn-invert { background-color: #34495e; }
+    .btn-sepia { background-color: #d35400; }
+    .btn-reset { background-color: #e67e22; }
+    .btn-download { background-color: #2980b9; grid-column: span 2; }
+
+    .slider-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 10px;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .slider-control {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .slider-control input {
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
+  <h1>Interactive Image Filter Application</h1>
+
   <div class="container">
-    <h1>Image Filter Application</h1>
-    
-    <!-- Canvas where the image will be drawn -->
-    <canvas id="canvas"></canvas>
+    <canvas id="imageCanvas"></canvas>
 
-    <!-- Upload Input -->
-    <div class="upload-section">
-      <label for="finput" class="custom-file-upload">Choose Image</label>
-      <input type="file" id="finput" accept="image/*" onchange="uploadImage()">
-    </div>
+    <div class="controls-section">
+      <!-- File Upload Button -->
+      <div class="file-input-wrapper">
+        <label for="uploadImage" class="custom-file-upload">Choose Image</label>
+        <input type="file" id="uploadImage" accept="image/*">
+      </div>
 
-    <!-- Filter Control Buttons -->
-    <div class="button-group">
-      <button class="btn filter-btn" onclick="makeGrayscale()">Grayscale</button>
-      <button class="btn filter-btn" onclick="makeRed()">Red Tint</button>
-      <button class="btn filter-btn" onclick="makeRainbow()">Rainbow</button>
-      <button class="btn reset-btn" onclick="resetImage()">Reset Image</button>
+      <!-- Preset Filter Buttons -->
+      <div class="button-group">
+        <button class="btn-grayscale" onclick="applyGrayscale()">Grayscale</button>
+        <button class="btn-red" onclick="applyRedTint()">Red Tint</button>
+        <button class="btn-rainbow" onclick="applyRainbow()">Rainbow</button>
+        <button class="btn-invert" onclick="applyInvert()">Invert</button>
+        <button class="btn-sepia" onclick="applySepia()">Sepia</button>
+        <button class="btn-reset" onclick="resetImage()">Reset Image</button>
+      </div>
+
+      <!-- Interactive Sliders -->
+      <div class="slider-group">
+        <div class="slider-control">
+          <label for="brightness">Brightness: <span id="brightnessVal">0</span></label>
+          <input type="range" id="brightness" min="-100" max="100" value="0" oninput="adjustBrightnessContrast()">
+        </div>
+        <div class="slider-control">
+          <label for="contrast">Contrast: <span id="contrastVal">0</span></label>
+          <input type="range" id="contrast" min="-100" max="100" value="0" oninput="adjustBrightnessContrast()">
+        </div>
+      </div>
+
+      <!-- Download Button -->
+      <div class="button-group">
+        <button class="btn-download" onclick="downloadImage()">💾 Download Filtered Image</button>
+      </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const canvas = document.getElementById('imageCanvas');
+    const ctx = canvas.getContext('2d');
+    const fileUpload = document.getElementById('uploadImage');
+
+    let originalImageData = null;
+    let imgElement = new Image();
+
+    // Default Canvas Size
+    canvas.width = 600;
+    canvas.height = 400;
+    ctx.fillStyle = "#e0e0e0";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#666666";
+    ctx.font = "18px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Upload an image to get started", canvas.width / 2, canvas.height / 2);
+
+    // Upload & Render Image
+    fileUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        imgElement = new Image();
+        imgElement.onload = () => {
+          canvas.width = imgElement.width;
+          canvas.height = imgElement.height;
+          ctx.drawImage(imgElement, 0, 0);
+          originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          resetSliders();
+        };
+        imgElement.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Helper: Reset Sliders
+    function resetSliders() {
+      document.getElementById('brightness').value = 0;
+      document.getElementById('contrast').value = 0;
+      document.getElementById('brightnessVal').innerText = "0";
+      document.getElementById('contrastVal').innerText = "0";
+    }
+
+    // Helper: Get Fresh Copy of Original Image
+    function getOriginalCopy() {
+      if (!originalImageData) return null;
+      ctx.putImageData(originalImageData, 0, 0);
+      return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+
+    // 1. Grayscale Filter
+    function applyGrayscale() {
+      const imgData = getOriginalCopy();
+      if (!imgData) return;
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        data[i] = avg;     // Red
+        data[i + 1] = avg; // Green
+        data[i + 2] = avg; // Blue
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resetSliders();
+    }
+
+    // 2. Red Tint Filter
+    function applyRedTint() {
+      const imgData = getOriginalCopy();
+      if (!imgData) return;
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.min(255, data[i] + 100); // Boost Red
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resetSliders();
+    }
+
+    // 3. Rainbow Filter (7 Horizontal Bands)
+    function applyRainbow() {
+      const imgData = getOriginalCopy();
+      if (!imgData) return;
+      const data = imgData.data;
+      const height = canvas.height;
+      const width = canvas.width;
+      const bandHeight = height / 7;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const index = (y * width + x) * 4;
+          const band = Math.floor(y / bandHeight);
+
+          // Apply color tint per band (Red, Orange, Yellow, Green, Blue, Indigo, Violet)
+          if (band === 0) { data[index] = 255; } // Red
+          else if (band === 1) { data[index] = 255; data[index + 1] = 127; } // Orange
+          else if (band === 2) { data[index] = 255; data[index + 1] = 255; } // Yellow
+          else if (band === 3) { data[index + 1] = 255; } // Green
+          else if (band === 4) { data[index + 2] = 255; } // Blue
+          else if (band === 5) { data[index] = 75; data[index + 2] = 130; } // Indigo
+          else if (band === 6) { data[index] = 148; data[index + 2] = 211; } // Violet
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resetSliders();
+    }
+
+    // 4. Invert / Negative Filter
+    function applyInvert() {
+      const imgData = getOriginalCopy();
+      if (!imgData) return;
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 255 - data[i];       // Red
+        data[i + 1] = 255 - data[i + 1]; // Green
+        data[i + 2] = 255 - data[i + 2]; // Blue
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resetSliders();
+    }
+
+    // 5. Sepia / Vintage Filter
+    function applySepia() {
+      const imgData = getOriginalCopy();
+      if (!imgData) return;
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+        data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+        data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resetSliders();
+    }
+
+    // 6. Interactive Brightness & Contrast Adjustment
+    function adjustBrightnessContrast() {
+      if (!originalImageData) return;
+
+      const brightness = parseInt(document.getElementById('brightness').value);
+      const contrast = parseInt(document.getElementById('contrast').value);
+
+      document.getElementById('brightnessVal').innerText = brightness;
+      document.getElementById('contrastVal').innerText = contrast;
+
+      const imgData = getOriginalCopy();
+      const data = imgData.data;
+
+      // Contrast factor calculation
+      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+      for (let i = 0; i < data.length; i += 4) {
+        // Apply Brightness & Contrast
+        for (let j = 0; j < 3; j++) {
+          let val = data[i + j] + brightness;
+          val = factor * (val - 128) + 128;
+          data[i + j] = Math.max(0, Math.min(255, val));
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    // 7. Reset Image
+    function resetImage() {
+      if (!originalImageData) return;
+      ctx.putImageData(originalImageData, 0, 0);
+      resetSliders();
+    }
+
+    // 8. Download Image Function
+    function downloadImage() {
+      if (!originalImageData) {
+        alert("Please upload an image first!");
+        return;
+      }
+      const link = document.createElement('a');
+      link.download = 'edited-image.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
 </body>
 </html>
